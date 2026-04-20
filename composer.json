@@ -1,0 +1,46 @@
+{
+    "name": "illuma-law/laravel-social-caster",
+    "description": "A standalone Laravel package for social media publishing.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Illuma Law",
+            "email": "hello@illumalaw.com"
+        }
+    ],
+    "require": {
+        "php": "^8.3|^8.4",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "saloonphp/saloon": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Illuma\\SocialCaster\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Illuma\\SocialCaster\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Illuma\\SocialCaster\\SocialCasterServiceProvider"
+            ],
+            "aliases": {
+                "SocialCaster": "Illuma\\SocialCaster\\Facades\\SocialCaster"
+            }
+        }
+    }
+}
