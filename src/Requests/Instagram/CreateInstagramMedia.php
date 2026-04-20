@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Illuma\SocialCaster\Requests\Instagram;
 
+use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 use Saloon\Traits\Body\HasJsonBody;
 
-class CreateInstagramMedia extends Request
+class CreateInstagramMedia extends Request implements HasBody
 {
     use HasJsonBody;
 

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Illuma\SocialCaster\Requests\Threads;
 
+use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 use Saloon\Traits\Body\HasJsonBody;
 
-class CreateThreadsPost extends Request
+class CreateThreadsPost extends Request implements HasBody
 {
     use HasJsonBody;
 

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Illuma\SocialCaster\Requests\TikTok;
 
+use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 
-class GetTikTokUserInfo extends Request
+class GetTikTokUserInfo extends Request implements HasBody
 {
     protected Method $method = Method::GET;
 

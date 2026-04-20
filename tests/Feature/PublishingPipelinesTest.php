@@ -17,40 +17,85 @@ use Illuma\SocialCaster\Requests\Threads\CreateThreadsPost;
 use Illuma\SocialCaster\Requests\TikTok\InitiateTikTokUpload;
 use Illuma\SocialCaster\Requests\TikTok\PublishTikTokVideo;
 use Illuma\SocialCaster\Requests\Twitter\CreateTweet;
-use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
-
-beforeEach(function () {
-    $this->mockClient = new MockClient();
-});
+use Saloon\Laravel\Facades\Saloon;
+use RuntimeException;
 
 function createMockContent(SocialPlatform $platform, array $data = []): PublishableContent
 {
-    return new class($platform, $data) implements PublishableContent {
+    return new class($platform, $data) implements PublishableContent
+    {
         public function __construct(private SocialPlatform $platform, private array $data) {}
-        public function getSocialPlatform(): SocialPlatform { return $this->platform; }
-        public function getPublishableBody(): ?string { return $this->data['body'] ?? 'Test body'; }
-        public function getPublishableTitle(): ?string { return $this->data['title'] ?? 'Test title'; }
-        public function getPublishableImagePath(): ?string { return $this->data['image_path'] ?? null; }
-        public function getPublishableVideoUrl(): ?string { return $this->data['video_url'] ?? null; }
-        public function getPublishableMetadata(): array { return []; }
+
+        public function getSocialPlatform(): SocialPlatform
+        {
+            return $this->platform;
+        }
+
+        public function getPublishableBody(): ?string
+        {
+            return $this->data['body'] ?? 'Test body';
+        }
+
+        public function getPublishableTitle(): ?string
+        {
+            return $this->data['title'] ?? 'Test title';
+        }
+
+        public function getPublishableImagePath(): ?string
+        {
+            return $this->data['image_path'] ?? null;
+        }
+
+        public function getPublishableVideoUrl(): ?string
+        {
+            return $this->data['video_url'] ?? null;
+        }
+
+        public function getPublishableMetadata(): array
+        {
+            return [];
+        }
     };
 }
 
 function createMockCredentials(SocialPlatform $platform, array $metadata = []): SocialCredentials
 {
-    return new class($platform, $metadata) implements SocialCredentials {
+    return new class($platform, $metadata) implements SocialCredentials
+    {
         public function __construct(private SocialPlatform $platform, private array $metadata) {}
-        public function getSocialPlatform(): SocialPlatform { return $this->platform; }
-        public function getSocialAccessToken(): ?string { return 'test-token'; }
-        public function getSocialPublishingAccessToken(): ?string { return 'test-publishing-token'; }
-        public function getSocialProviderUserId(): ?string { return '123456'; }
-        public function getSocialMetadata(): array { return $this->metadata; }
+
+        public function getSocialPlatform(): SocialPlatform
+        {
+            return $this->platform;
+        }
+
+        public function getSocialAccessToken(): ?string
+        {
+            return 'test-token';
+        }
+
+        public function getSocialPublishingAccessToken(): ?string
+        {
+            return $this->metadata['publishing_token'] ?? 'test-publishing-token';
+        }
+
+        public function getSocialProviderUserId(): ?string
+        {
+            return '123456';
+        }
+
+        public function getSocialMetadata(): array
+        {
+            return $this->metadata;
+        }
     };
 }
 
 test('it can publish to twitter', function () {
-    $this->mockClient->addResponse(MockResponse::make(['data' => ['id' => 'twitter-123']], 201), CreateTweet::class);
+    Saloon::fake([
+        CreateTweet::class => MockResponse::make(['data' => ['id' => 'twitter-123']], 201),
+    ]);
 
     $content = createMockContent(SocialPlatform::Twitter);
     $credentials = createMockCredentials(SocialPlatform::Twitter);
@@ -59,12 +104,14 @@ test('it can publish to twitter', function () {
 
     expect($result)->toBeInstanceOf(PublishResult::class)
         ->and($result->externalId)->toBe('twitter-123');
-    
-    $this->mockClient->assertSent(CreateTweet::class);
+
+    Saloon::assertSent(CreateTweet::class);
 });
 
 test('it can publish to linkedin', function () {
-    $this->mockClient->addResponse(MockResponse::make(['id' => 'linkedin-123'], 201), CreateLinkedInPost::class);
+    Saloon::fake([
+        CreateLinkedInPost::class => MockResponse::make(['id' => 'linkedin-123'], 201),
+    ]);
 
     $content = createMockContent(SocialPlatform::LinkedIn);
     $credentials = createMockCredentials(SocialPlatform::LinkedIn);
@@ -74,11 +121,13 @@ test('it can publish to linkedin', function () {
     expect($result)->toBeInstanceOf(PublishResult::class)
         ->and($result->externalId)->toBe('linkedin-123');
 
-    $this->mockClient->assertSent(CreateLinkedInPost::class);
+    Saloon::assertSent(CreateLinkedInPost::class);
 });
 
 test('it can publish to facebook', function () {
-    $this->mockClient->addResponse(MockResponse::make(['id' => 'facebook-123'], 201), CreateFacebookPost::class);
+    Saloon::fake([
+        CreateFacebookPost::class => MockResponse::make(['id' => 'facebook-123'], 201),
+    ]);
 
     $content = createMockContent(SocialPlatform::Facebook);
     $credentials = createMockCredentials(SocialPlatform::Facebook, ['page_id' => 'page-123']);
@@ -88,12 +137,14 @@ test('it can publish to facebook', function () {
     expect($result)->toBeInstanceOf(PublishResult::class)
         ->and($result->externalId)->toBe('facebook-123');
 
-    $this->mockClient->assertSent(CreateFacebookPost::class);
+    Saloon::assertSent(CreateFacebookPost::class);
 });
 
 test('it can publish to instagram', function () {
-    $this->mockClient->addResponse(MockResponse::make(['id' => 'creation-123'], 201), CreateInstagramMedia::class);
-    $this->mockClient->addResponse(MockResponse::make(['id' => 'instagram-123'], 201), PublishInstagramMedia::class);
+    Saloon::fake([
+        CreateInstagramMedia::class  => MockResponse::make(['id' => 'creation-123'], 201),
+        PublishInstagramMedia::class => MockResponse::make(['id' => 'instagram-123'], 201),
+    ]);
 
     $content = createMockContent(SocialPlatform::Instagram, ['image_path' => 'https://example.com/image.jpg']);
     $credentials = createMockCredentials(SocialPlatform::Instagram, ['instagram_business_account_id' => 'ig-123']);
@@ -103,12 +154,14 @@ test('it can publish to instagram', function () {
     expect($result)->toBeInstanceOf(PublishResult::class)
         ->and($result->externalId)->toBe('instagram-123');
 
-    $this->mockClient->assertSent(CreateInstagramMedia::class);
-    $this->mockClient->assertSent(PublishInstagramMedia::class);
+    Saloon::assertSent(CreateInstagramMedia::class);
+    Saloon::assertSent(PublishInstagramMedia::class);
 });
 
 test('it can publish to threads', function () {
-    $this->mockClient->addResponse(MockResponse::make(['id' => 'threads-123'], 201), CreateThreadsPost::class);
+    Saloon::fake([
+        CreateThreadsPost::class => MockResponse::make(['id' => 'threads-123'], 201),
+    ]);
 
     $content = createMockContent(SocialPlatform::Threads);
     $credentials = createMockCredentials(SocialPlatform::Threads, ['threads_user_id' => 'user-123']);
@@ -118,12 +171,14 @@ test('it can publish to threads', function () {
     expect($result)->toBeInstanceOf(PublishResult::class)
         ->and($result->externalId)->toBe('threads-123');
 
-    $this->mockClient->assertSent(CreateThreadsPost::class);
+    Saloon::assertSent(CreateThreadsPost::class);
 });
 
 test('it can publish to tiktok', function () {
-    $this->mockClient->addResponse(MockResponse::make(['data' => ['publish_id' => 'tiktok-init-123']], 200), InitiateTikTokUpload::class);
-    $this->mockClient->addResponse(MockResponse::make(['data' => ['publish_id' => 'tiktok-123']], 200), PublishTikTokVideo::class);
+    Saloon::fake([
+        InitiateTikTokUpload::class => MockResponse::make(['data' => ['publish_id' => 'tiktok-init-123']], 200),
+        PublishTikTokVideo::class   => MockResponse::make(['data' => ['publish_id' => 'tiktok-123']], 200),
+    ]);
 
     $content = createMockContent(SocialPlatform::TikTok, ['video_url' => 'https://example.com/video.mp4']);
     $credentials = createMockCredentials(SocialPlatform::TikTok);
@@ -133,17 +188,18 @@ test('it can publish to tiktok', function () {
     expect($result)->toBeInstanceOf(PublishResult::class)
         ->and($result->externalId)->toBe('tiktok-123');
 
-    $this->mockClient->assertSent(InitiateTikTokUpload::class);
-    $this->mockClient->assertSent(PublishTikTokVideo::class);
+    Saloon::assertSent(InitiateTikTokUpload::class);
+    Saloon::assertSent(PublishTikTokVideo::class);
 });
 
 test('it validates character limits', function () {
     $content = createMockContent(SocialPlatform::Twitter, ['body' => str_repeat('a', 281)]);
-    $errors = SocialCaster::validate($content);
+    $credentials = createMockCredentials(SocialPlatform::Twitter);
+    $errors = SocialCaster::validate($content, $credentials);
     expect($errors)->toContain('Post body exceeds twitter character limit (280).');
 
     $content = createMockContent(SocialPlatform::Twitter, ['body' => str_repeat('a', 280)]);
-    $errors = SocialCaster::validate($content);
+    $errors = SocialCaster::validate($content, $credentials);
     expect($errors)->toBeEmpty();
 });
 
@@ -152,6 +208,7 @@ test('it uses custom validation callbacks', function () {
         if ($credentials->getSocialProviderUserId() === '123456') {
             return 'Custom validation error';
         }
+
         return [];
     });
 
@@ -161,3 +218,62 @@ test('it uses custom validation callbacks', function () {
     $errors = SocialCaster::validate($content, $credentials);
     expect($errors)->toContain('Custom validation error');
 });
+
+test('it throws exception when platform does not match', function () {
+    $content = createMockContent(SocialPlatform::Twitter);
+    $credentials = createMockCredentials(SocialPlatform::Facebook);
+
+    SocialCaster::publish($content, $credentials);
+})->throws(RuntimeException::class, 'Content platform does not match the selected social account.');
+
+test('it validates required body', function () {
+    $content = createMockContent(SocialPlatform::Twitter, ['body' => '']);
+    $errors = SocialCaster::validate($content);
+    expect($errors)->toContain('Post body is required.');
+});
+
+test('it validates instagram image requirement', function () {
+    $content = createMockContent(SocialPlatform::Instagram, ['image_path' => '']);
+    $errors = SocialCaster::validate($content);
+    expect($errors)->toContain('Instagram posts require an image.');
+});
+
+test('it validates tiktok video requirement', function () {
+    $content = createMockContent(SocialPlatform::TikTok, ['video_url' => '']);
+    $errors = SocialCaster::validate($content);
+    expect($errors)->toContain('TikTok posts require a video URL.');
+});
+
+test('it validates credentials existence', function () {
+    $content = createMockContent(SocialPlatform::Twitter);
+    $errors = SocialCaster::validate($content, null);
+    expect($errors)->toContain('No social account connected for publishing.');
+});
+
+test('it throws exception for missing facebook page id', function () {
+    $content = createMockContent(SocialPlatform::Facebook);
+    $credentials = createMockCredentials(SocialPlatform::Facebook, ['page_id' => '']);
+
+    SocialCaster::publish($content, $credentials);
+})->throws(RuntimeException::class, 'Facebook page ID and publishing access token are required.');
+
+test('it throws exception for missing instagram business account id', function () {
+    $content = createMockContent(SocialPlatform::Instagram, ['image_path' => 'https://example.com/image.jpg']);
+    $credentials = createMockCredentials(SocialPlatform::Instagram, ['instagram_business_account_id' => '']);
+
+    SocialCaster::publish($content, $credentials);
+})->throws(RuntimeException::class, 'Instagram business account ID and publishing access token are required.');
+
+test('it throws exception for missing threads user id', function () {
+    $content = createMockContent(SocialPlatform::Threads);
+    $credentials = createMockCredentials(SocialPlatform::Threads, ['threads_user_id' => '']);
+
+    SocialCaster::publish($content, $credentials);
+})->throws(RuntimeException::class, 'Threads user ID is required.');
+
+test('it throws exception for missing tiktok video url', function () {
+    $content = createMockContent(SocialPlatform::TikTok, ['video_url' => null]);
+    $credentials = createMockCredentials(SocialPlatform::TikTok);
+
+    SocialCaster::publish($content, $credentials);
+})->throws(RuntimeException::class, 'TikTok publishing requires a public video URL.');

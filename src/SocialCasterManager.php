@@ -81,15 +81,19 @@ class SocialCasterManager
             $errors[] = 'TikTok posts require a video URL.';
         }
 
-        if ($credentials !== null) {
-            foreach ($this->validationCallbacks as $callback) {
-                $result = $callback($content, $credentials);
+        if ($credentials === null) {
+            $errors[] = 'No social account connected for publishing.';
 
-                if (is_array($result)) {
-                    $errors = array_merge($errors, $result);
-                } elseif (is_string($result)) {
-                    $errors[] = $result;
-                }
+            return $errors;
+        }
+
+        foreach ($this->validationCallbacks as $callback) {
+            $result = $callback($content, $credentials);
+
+            if (is_array($result)) {
+                $errors = array_merge($errors, $result);
+            } elseif (is_string($result)) {
+                $errors[] = $result;
             }
         }
 
@@ -98,7 +102,9 @@ class SocialCasterManager
 
     protected function publishToTwitter(PublishableContent $content, SocialCredentials $credentials): PublishResult
     {
-        $response = (new TwitterConnector($credentials))->send(
+        $connector = new TwitterConnector($credentials);
+
+        $response = $connector->send(
             new CreateTweet($content->getPublishableBody()),
         );
         $this->assertSuccessful($response, 'X/Twitter');
@@ -112,9 +118,11 @@ class SocialCasterManager
 
     protected function publishToLinkedIn(PublishableContent $content, SocialCredentials $credentials): PublishResult
     {
-        $authorUrn = (string) data_get($credentials->getSocialMetadata(), 'author_urn', 'urn:li:person:' . $credentials->getSocialProviderUserId());
+        $authorUrn = (string) data_get($credentials->getSocialMetadata(), 'author_urn', 'urn:li:person:'.$credentials->getSocialProviderUserId());
 
-        $response = (new LinkedInConnector($credentials))->send(
+        $connector = new LinkedInConnector($credentials);
+
+        $response = $connector->send(
             new CreateLinkedInPost([
                 'author'          => $authorUrn,
                 'lifecycleState'  => 'PUBLISHED',
@@ -146,7 +154,9 @@ class SocialCasterManager
             throw new RuntimeException('Facebook page ID and publishing access token are required.');
         }
 
-        $response = (new FacebookConnector($credentials))->send(
+        $connector = new FacebookConnector($credentials);
+
+        $response = $connector->send(
             new CreateFacebookPost($pageId, ['message' => $content->getPublishableBody()]),
         );
         $this->assertSuccessful($response, 'Facebook');
@@ -173,6 +183,7 @@ class SocialCasterManager
         }
 
         $connector = new InstagramConnector($credentials);
+
         $createResponse = $connector->send(
             new CreateInstagramMedia($instagramBusinessAccountId, [
                 'image_url' => $imageUrl,
@@ -210,7 +221,9 @@ class SocialCasterManager
             throw new RuntimeException('Threads user ID is required.');
         }
 
-        $response = (new ThreadsConnector($credentials))->send(
+        $connector = new ThreadsConnector($credentials);
+
+        $response = $connector->send(
             new CreateThreadsPost(trim($userId), $content->getPublishableBody()),
         );
         $this->assertSuccessful($response, 'Threads');
@@ -231,6 +244,7 @@ class SocialCasterManager
         }
 
         $connector = new TikTokConnector($credentials);
+
         $initResponse = $connector->send(
             new InitiateTikTokUpload($videoUrl),
         );

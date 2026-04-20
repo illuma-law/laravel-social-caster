@@ -4,25 +4,22 @@ declare(strict_types=1);
 
 namespace Illuma\SocialCaster;
 
-use Illuminate\Support\ServiceProvider;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class SocialCasterServiceProvider extends ServiceProvider
+class SocialCasterServiceProvider extends PackageServiceProvider
 {
-    public function register(): void
+    public function configurePackage(Package $package): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/social-caster.php', 'social-caster');
-
-        $this->app->singleton('social-caster', function ($app) {
-            return new SocialCasterManager();
-        });
+        $package
+            ->name('laravel-social-caster')
+            ->hasConfigFile('social-caster');
     }
 
-    public function boot(): void
+    public function packageRegistered(): void
     {
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__ . '/../config/social-caster.php' => config_path('social-caster.php'),
-            ], 'social-caster-config');
-        }
+        $this->app->singleton('social-caster', function ($app) {
+            return new SocialCasterManager;
+        });
     }
 }
