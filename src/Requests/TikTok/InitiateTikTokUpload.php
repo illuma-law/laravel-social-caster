@@ -24,6 +24,9 @@ class InitiateTikTokUpload extends Request implements HasBody
         return '/post/publish/inbox/video/init/';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return [

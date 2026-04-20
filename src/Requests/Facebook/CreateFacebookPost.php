@@ -28,6 +28,9 @@ class CreateFacebookPost extends Request implements HasBody
         return "/{$this->pageId}/feed";
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return $this->payload;

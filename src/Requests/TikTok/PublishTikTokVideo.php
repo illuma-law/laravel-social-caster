@@ -25,6 +25,9 @@ class PublishTikTokVideo extends Request implements HasBody
         return '/post/publish/video/publish/';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return [

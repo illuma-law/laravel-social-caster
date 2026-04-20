@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Illuma\SocialCaster\Requests\Twitter;
 
-use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 
-class GetTwitterMe extends Request implements HasBody
+class GetTwitterMe extends Request
 {
     protected Method $method = Method::GET;
 

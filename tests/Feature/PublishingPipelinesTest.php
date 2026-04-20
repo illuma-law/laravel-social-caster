@@ -21,10 +21,16 @@ use Saloon\Http\Faking\MockResponse;
 use Saloon\Laravel\Facades\Saloon;
 use RuntimeException;
 
+/**
+ * @param  array<string, mixed>  $data
+ */
 function createMockContent(SocialPlatform $platform, array $data = []): PublishableContent
 {
     return new class($platform, $data) implements PublishableContent
     {
+        /**
+         * @param  array<string, mixed>  $data
+         */
         public function __construct(private SocialPlatform $platform, private array $data) {}
 
         public function getSocialPlatform(): SocialPlatform
@@ -34,24 +40,35 @@ function createMockContent(SocialPlatform $platform, array $data = []): Publisha
 
         public function getPublishableBody(): ?string
         {
-            return $this->data['body'] ?? 'Test body';
+            $body = $this->data['body'] ?? 'Test body';
+
+            return is_string($body) ? $body : null;
         }
 
         public function getPublishableTitle(): ?string
         {
-            return $this->data['title'] ?? 'Test title';
+            $title = $this->data['title'] ?? 'Test title';
+
+            return is_string($title) ? $title : null;
         }
 
         public function getPublishableImagePath(): ?string
         {
-            return $this->data['image_path'] ?? null;
+            $path = $this->data['image_path'] ?? null;
+
+            return is_string($path) ? $path : null;
         }
 
         public function getPublishableVideoUrl(): ?string
         {
-            return $this->data['video_url'] ?? null;
+            $url = $this->data['video_url'] ?? null;
+
+            return is_string($url) ? $url : null;
         }
 
+        /**
+         * @return array<string, mixed>
+         */
         public function getPublishableMetadata(): array
         {
             return [];
@@ -59,10 +76,16 @@ function createMockContent(SocialPlatform $platform, array $data = []): Publisha
     };
 }
 
+/**
+ * @param  array<string, mixed>  $metadata
+ */
 function createMockCredentials(SocialPlatform $platform, array $metadata = []): SocialCredentials
 {
     return new class($platform, $metadata) implements SocialCredentials
     {
+        /**
+         * @param  array<string, mixed>  $metadata
+         */
         public function __construct(private SocialPlatform $platform, private array $metadata) {}
 
         public function getSocialPlatform(): SocialPlatform
@@ -70,21 +93,26 @@ function createMockCredentials(SocialPlatform $platform, array $metadata = []): 
             return $this->platform;
         }
 
-        public function getSocialAccessToken(): ?string
+        public function getSocialAccessToken(): string
         {
             return 'test-token';
         }
 
-        public function getSocialPublishingAccessToken(): ?string
+        public function getSocialPublishingAccessToken(): string
         {
-            return $this->metadata['publishing_token'] ?? 'test-publishing-token';
+            $token = $this->metadata['publishing_token'] ?? 'test-publishing-token';
+
+            return is_string($token) ? $token : 'test-publishing-token';
         }
 
-        public function getSocialProviderUserId(): ?string
+        public function getSocialProviderUserId(): string
         {
             return '123456';
         }
 
+        /**
+         * @return array<string, mixed>
+         */
         public function getSocialMetadata(): array
         {
             return $this->metadata;
@@ -102,7 +130,7 @@ test('it can publish to twitter', function () {
 
     $result = SocialCaster::publish($content, $credentials);
 
-    expect($result)->toBeInstanceOf(PublishResult::class)
+    expect($result)->not->toBeNull()
         ->and($result->externalId)->toBe('twitter-123');
 
     Saloon::assertSent(CreateTweet::class);
@@ -118,7 +146,7 @@ test('it can publish to linkedin', function () {
 
     $result = SocialCaster::publish($content, $credentials);
 
-    expect($result)->toBeInstanceOf(PublishResult::class)
+    expect($result)->not->toBeNull()
         ->and($result->externalId)->toBe('linkedin-123');
 
     Saloon::assertSent(CreateLinkedInPost::class);
@@ -134,7 +162,7 @@ test('it can publish to facebook', function () {
 
     $result = SocialCaster::publish($content, $credentials);
 
-    expect($result)->toBeInstanceOf(PublishResult::class)
+    expect($result)->not->toBeNull()
         ->and($result->externalId)->toBe('facebook-123');
 
     Saloon::assertSent(CreateFacebookPost::class);
@@ -151,7 +179,7 @@ test('it can publish to instagram', function () {
 
     $result = SocialCaster::publish($content, $credentials);
 
-    expect($result)->toBeInstanceOf(PublishResult::class)
+    expect($result)->not->toBeNull()
         ->and($result->externalId)->toBe('instagram-123');
 
     Saloon::assertSent(CreateInstagramMedia::class);
@@ -168,7 +196,7 @@ test('it can publish to threads', function () {
 
     $result = SocialCaster::publish($content, $credentials);
 
-    expect($result)->toBeInstanceOf(PublishResult::class)
+    expect($result)->not->toBeNull()
         ->and($result->externalId)->toBe('threads-123');
 
     Saloon::assertSent(CreateThreadsPost::class);
@@ -185,7 +213,7 @@ test('it can publish to tiktok', function () {
 
     $result = SocialCaster::publish($content, $credentials);
 
-    expect($result)->toBeInstanceOf(PublishResult::class)
+    expect($result)->not->toBeNull()
         ->and($result->externalId)->toBe('tiktok-123');
 
     Saloon::assertSent(InitiateTikTokUpload::class);

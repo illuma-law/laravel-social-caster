@@ -4,20 +4,22 @@
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/illuma-law/laravel-social-caster/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/illuma-law/laravel-social-caster/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/illuma-law/laravel-social-caster.svg?style=flat-square)](https://packagist.org/packages/illuma-law/laravel-social-caster)
 
-A standalone Laravel package for social media publishing. Supports Twitter, LinkedIn, Facebook, Instagram, Threads, and TikTok.
+A standalone Laravel package providing an elegant, unified API for publishing content to multiple social media platforms.
 
-## TL;DR
+Instead of wrestling with half a dozen different SDKs, API documentation sites, and conflicting payload structures, Social Caster provides a single, uniform interface to broadcast content to Twitter, LinkedIn, Facebook, Instagram, Threads, and TikTok.
 
-```php
-use Illuma\SocialCaster\Facades\SocialCaster;
+## Features
 
-// Publish content to social media
-$result = SocialCaster::publish($content, $credentials);
-
-if ($result->successful) {
-    echo "Published with ID: {$result->externalId}";
-}
-```
+- **Unified Interface:** Publish text, images, and videos across multiple networks using a single `publish()` method.
+- **Contract-Driven:** Implement `PublishableContent` on your Models (like a `Post` or `Tweet` model) and `SocialCredentials` on your auth models to decouple business logic from the API.
+- **Built-in Validation:** Validates character limits, required media, and platform-specific constraints before making any network calls.
+- **Supported Platforms:** 
+  - Twitter (X)
+  - LinkedIn (Profiles and Organization Pages)
+  - Facebook (Pages)
+  - Instagram
+  - Threads
+  - TikTok
 
 ## Installation
 
@@ -27,16 +29,19 @@ You can install the package via composer:
 composer require illuma-law/laravel-social-caster
 ```
 
-You can publish the config file with:
+Publish the config file:
 
 ```bash
 php artisan vendor:publish --tag="social-caster-config"
 ```
 
-This is the contents of the published config file:
+## Configuration
+
+The published `config/social-caster.php` defines platform-specific constraints and defaults:
 
 ```php
 return [
+    // Pre-flight validation checks will fail if content exceeds these limits
     'char_limits' => [
         'twitter' => 280,
         'linkedin' => 3000,
@@ -46,23 +51,27 @@ return [
         'tiktok' => 2000,
     ],
     'linkedin' => [
-        'default_visibility' => 'PUBLIC',
+        'default_visibility' => 'PUBLIC', // PUBLIC or CONNECTIONS
     ],
 ];
 ```
 
-## Usage
+## Usage & Integration
 
-### Define Publishable Content
+### 1. Define Publishable Content
 
-Your content model should implement the `PublishableContent` interface:
+Any model or DTO you wish to publish must implement the `PublishableContent` contract. This tells Social Caster exactly what to send to the platform.
 
 ```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
 use Illuma\SocialCaster\Contracts\PublishableContent;
 use Illuma\SocialCaster\Enums\SocialPlatform;
 
-class BlogPost implements PublishableContent
+class BlogPost extends Model implements PublishableContent
 {
+    // Ensure the model knows which platform it targets
     public function getSocialPlatform(): SocialPlatform
     {
         return SocialPlatform::Twitter;
@@ -70,7 +79,7 @@ class BlogPost implements PublishableContent
 
     public function getPublishableBody(): ?string
     {
-        return $this->title;
+        return $this->social_caption; // e.g., "Check out our new post! #laravel"
     }
 
     public function getPublishableTitle(): ?string
@@ -80,7 +89,8 @@ class BlogPost implements PublishableContent
 
     public function getPublishableImagePath(): ?string
     {
-        return $this->image_url;
+        // Must be a publicly accessible URL or local path depending on the platform
+        return $this->header_image_url; 
     }
 
     public function getPublishableVideoUrl(): ?string
@@ -95,86 +105,91 @@ class BlogPost implements PublishableContent
 }
 ```
 
-### Define Social Credentials
+### 2. Define Social Credentials
 
-Your social account model should implement the `SocialCredentials` interface:
+The account or token storage model must implement the `SocialCredentials` contract so Social Caster knows how to authenticate the request.
 
 ```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
 use Illuma\SocialCaster\Contracts\SocialCredentials;
 use Illuma\SocialCaster\Enums\SocialPlatform;
 
-class SocialAccount implements SocialCredentials
+class SocialAccount extends Model implements SocialCredentials
 {
     public function getSocialPlatform(): SocialPlatform
     {
-        return SocialPlatform::Twitter;
+        return SocialPlatform::from($this->provider_name); // 'twitter', 'linkedin', etc.
     }
 
     public function getSocialAccessToken(): ?string
     {
-        return $this->token;
+        return $this->oauth_token;
     }
 
     public function getSocialPublishingAccessToken(): ?string
     {
-        return $this->publishing_token;
+        // Used by platforms that require a separate token for publishing (e.g. FB Pages)
+        return $this->page_access_token ?? $this->oauth_token;
     }
 
     public function getSocialProviderUserId(): ?string
     {
-        return $this->provider_user_id;
+        // The external platform's ID for this user/page
+        return $this->provider_user_id; 
     }
 
     public function getSocialMetadata(): array
     {
-        return $this->metadata;
+        // Extra auth tokens (like Twitter secrets) can be passed here
+        return [
+            'token_secret' => $this->oauth_token_secret,
+            'client_id' => config('services.twitter.client_id'),
+            'client_secret' => config('services.twitter.client_secret'),
+        ];
     }
 }
 ```
 
-### Publishing
+### 3. Validation and Publishing
 
-Use the `SocialCaster` facade to publish content:
+You can now use the `SocialCaster` facade to validate and publish the content.
 
 ```php
 use Illuma\SocialCaster\Facades\SocialCaster;
 
-$result = SocialCaster::publish($content, $credentials);
+$post = BlogPost::find(1);
+$account = SocialAccount::where('provider_name', 'twitter')->first();
 
-echo $result->externalId;
-```
-
-### Validation
-
-You can validate content before publishing:
-
-```php
-$errors = SocialCaster::validate($content, $credentials);
+// 1. Validate first (Optional but recommended)
+$errors = SocialCaster::validate($post, $account);
 
 if (!empty($errors)) {
-    // Handle validation errors
+    // Returns an array of error strings (e.g. ["Content exceeds 280 characters"])
+    return back()->withErrors($errors);
+}
+
+// 2. Publish
+$result = SocialCaster::publish($post, $account);
+
+if ($result->successful) {
+    $post->update(['external_social_id' => $result->externalId]);
+    echo "Successfully published! ID: {$result->externalId}";
+} else {
+    // $result->error contains the API error message
+    Log::error("Failed to publish", ['error' => $result->error]);
 }
 ```
 
 ## Testing
 
+The package provides a comprehensive Pest test suite to ensure API connectors handle payloads correctly.
+
 ```bash
 composer test
 ```
 
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Security
-
-If you discover any security related issues, please email support@illuma.law instead of using the issue tracker.
-
-## Credits
-
-- [illuma-law](https://github.com/illuma-law)
-- [All Contributors](../../contributors)
-
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE) for more information.
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.

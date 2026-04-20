@@ -24,6 +24,9 @@ class CreateTweet extends Request implements HasBody
         return '/tweets';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return [

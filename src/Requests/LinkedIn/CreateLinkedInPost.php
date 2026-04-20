@@ -27,6 +27,9 @@ class CreateLinkedInPost extends Request implements HasBody
         return '/ugcPosts';
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return $this->payload;

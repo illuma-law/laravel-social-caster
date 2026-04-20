@@ -25,6 +25,9 @@ class PublishInstagramMedia extends Request implements HasBody
         return "/{$this->instagramBusinessAccountId}/media_publish";
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return [

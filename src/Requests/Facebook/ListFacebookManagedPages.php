@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Illuma\SocialCaster\Requests\Facebook;
 
-use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;
 use Saloon\Http\Request;
 
-final class ListFacebookManagedPages extends Request implements HasBody
+final class ListFacebookManagedPages extends Request
 {
     protected Method $method = Method::GET;
 

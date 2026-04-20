@@ -69,8 +69,8 @@ class SocialCasterManager
         $platform = $content->getSocialPlatform();
         $charLimit = Config::get("social-caster.char_limits.{$platform->value}", 3000);
 
-        if (mb_strlen((string) $body) > $charLimit) {
-            $errors[] = "Post body exceeds {$platform->value} character limit ({$charLimit}).";
+        if (mb_strlen((string) $body) > (is_numeric($charLimit) ? (int) $charLimit : 3000)) {
+            $errors[] = "Post body exceeds {$platform->value} character limit (".(is_scalar($charLimit) ? (string) $charLimit : '3000').").";
         }
 
         if ($platform === SocialPlatform::Instagram && ($content->getPublishableImagePath() === null || $content->getPublishableImagePath() === '')) {
@@ -91,7 +91,11 @@ class SocialCasterManager
             $result = $callback($content, $credentials);
 
             if (is_array($result)) {
-                $errors = array_merge($errors, $result);
+                foreach ($result as $error) {
+                    if (is_string($error)) {
+                        $errors[] = $error;
+                    }
+                }
             } elseif (is_string($result)) {
                 $errors[] = $result;
             }
@@ -110,7 +114,7 @@ class SocialCasterManager
         $this->assertSuccessful($response, 'X/Twitter');
 
         $data = $response->json();
-        $externalId = is_array($data) ? data_get($data, 'data.id') : null;
+        $externalId = data_get($data, 'data.id');
 
         return new PublishResult(
             externalId: is_string($externalId) ? $externalId : null,
@@ -121,9 +125,14 @@ class SocialCasterManager
 
     protected function publishToLinkedIn(PublishableContent $content, SocialCredentials $credentials): PublishResult
     {
-        $authorUrn = (string) data_get($credentials->getSocialMetadata(), 'author_urn', 'urn:li:person:'.$credentials->getSocialProviderUserId());
+        $metadata = $credentials->getSocialMetadata();
+        $authorUrn = data_get($metadata, 'author_urn');
+        $authorUrn = is_scalar($authorUrn) ? (string) $authorUrn : 'urn:li:person:'.$credentials->getSocialProviderUserId();
 
         $connector = new LinkedInConnector($credentials);
+
+        $visibility = Config::get('social-caster.linkedin.default_visibility');
+        $visibility = is_scalar($visibility) ? (string) $visibility : 'PUBLIC';
 
         $response = $connector->send(
             new CreateLinkedInPost([
@@ -136,14 +145,14 @@ class SocialCasterManager
                     ],
                 ],
                 'visibility' => [
-                    'com.linkedin.ugc.MemberNetworkVisibility' => Config::get('social-caster.linkedin.default_visibility', 'PUBLIC'),
+                    'com.linkedin.ugc.MemberNetworkVisibility' => $visibility,
                 ],
             ]),
         );
         $this->assertSuccessful($response, 'LinkedIn');
 
         $data = $response->json();
-        $externalId = $response->header('x-restli-id') ?? (is_array($data) ? data_get($data, 'id') : null);
+        $externalId = $response->header('x-restli-id') ?? data_get($data, 'id');
 
         return new PublishResult(
             externalId: is_string($externalId) ? $externalId : null,
@@ -168,7 +177,7 @@ class SocialCasterManager
         $this->assertSuccessful($response, 'Facebook');
 
         $data = $response->json();
-        $externalId = is_array($data) ? data_get($data, 'id') : null;
+        $externalId = data_get($data, 'id');
 
         return new PublishResult(
             externalId: is_string($externalId) ? $externalId : null,
@@ -202,7 +211,7 @@ class SocialCasterManager
         $this->assertSuccessful($createResponse, 'Instagram');
 
         $createData = $createResponse->json();
-        $creationId = is_array($createData) ? data_get($createData, 'id') : null;
+        $creationId = data_get($createData, 'id');
 
         if (! is_string($creationId) || $creationId === '') {
             throw new RuntimeException('Instagram media creation did not return a creation ID.');
@@ -214,7 +223,7 @@ class SocialCasterManager
         $this->assertSuccessful($publishResponse, 'Instagram');
 
         $publishData = $publishResponse->json();
-        $externalId = is_array($publishData) ? data_get($publishData, 'id') : null;
+        $externalId = data_get($publishData, 'id');
 
         return new PublishResult(
             externalId: is_string($externalId) ? $externalId : null,
@@ -242,7 +251,7 @@ class SocialCasterManager
         $this->assertSuccessful($response, 'Threads');
 
         $data = $response->json();
-        $externalId = is_array($data) ? data_get($data, 'id') : null;
+        $externalId = data_get($data, 'id');
 
         return new PublishResult(
             externalId: is_string($externalId) ? $externalId : null,
@@ -267,7 +276,7 @@ class SocialCasterManager
         $this->assertSuccessful($initResponse, 'TikTok');
 
         $initData = $initResponse->json();
-        $publishId = is_array($initData) ? data_get($initData, 'data.publish_id') : null;
+        $publishId = data_get($initData, 'data.publish_id');
 
         if (! is_string($publishId) || $publishId === '') {
             throw new RuntimeException('TikTok upload initiation did not return publish_id.');
@@ -279,7 +288,7 @@ class SocialCasterManager
         $this->assertSuccessful($publishResponse, 'TikTok');
 
         $publishData = $publishResponse->json();
-        $externalId = is_array($publishData) ? data_get($publishData, 'data.publish_id', $publishId) : $publishId;
+        $externalId = data_get($publishData, 'data.publish_id', $publishId);
 
         return new PublishResult(
             externalId: is_string($externalId) ? $externalId : null,

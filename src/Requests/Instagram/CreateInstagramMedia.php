@@ -28,6 +28,9 @@ class CreateInstagramMedia extends Request implements HasBody
         return "/{$this->instagramBusinessAccountId}/media";
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return $this->payload;

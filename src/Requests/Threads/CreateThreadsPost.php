@@ -25,6 +25,9 @@ class CreateThreadsPost extends Request implements HasBody
         return "/{$this->userId}/threads";
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function defaultBody(): array
     {
         return [

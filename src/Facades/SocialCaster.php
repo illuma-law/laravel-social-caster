@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Facade;
  * @see SocialCasterManager
  *
  * @method static \Illuma\SocialCaster\DTOs\PublishResult publish(\Illuma\SocialCaster\Contracts\PublishableContent $content, \Illuma\SocialCaster\Contracts\SocialCredentials $credentials)
- * @method static array validate(\Illuma\SocialCaster\Contracts\PublishableContent $content, ?\Illuma\SocialCaster\Contracts\SocialCredentials $credentials = null)
+ * @method static array<string, mixed> validate(\Illuma\SocialCaster\Contracts\PublishableContent $content, ?\Illuma\SocialCaster\Contracts\SocialCredentials $credentials = null)
  * @method static void registerValidationCallback(\Closure $callback)
  */
 class SocialCaster extends Facade
