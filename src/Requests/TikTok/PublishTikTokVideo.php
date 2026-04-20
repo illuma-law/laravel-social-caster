@@ -32,7 +32,7 @@ class PublishTikTokVideo extends Request implements HasBody
     {
         return [
             'publish_id' => $this->publishId,
-            'post_info'  => [
+            'post_info' => [
                 'title' => $this->caption,
             ],
         ];

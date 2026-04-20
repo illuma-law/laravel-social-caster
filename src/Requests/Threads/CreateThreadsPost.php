@@ -31,7 +31,7 @@ class CreateThreadsPost extends Request implements HasBody
     protected function defaultBody(): array
     {
         return [
-            'text'       => $this->text,
+            'text' => $this->text,
             'media_type' => 'TEXT',
         ];
     }

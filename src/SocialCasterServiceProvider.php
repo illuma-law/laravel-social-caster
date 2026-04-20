@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Illuma\SocialCaster;
 
+use Illuminate\Foundation\Application;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -18,8 +19,8 @@ class SocialCasterServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        $this->app->singleton('social-caster', function (\Illuminate\Foundation\Application $app): SocialCasterManager {
-            return new SocialCasterManager();
+        $this->app->singleton('social-caster', function (Application $app): SocialCasterManager {
+            return new SocialCasterManager;
         });
     }
 }

@@ -44,12 +44,12 @@ class SocialCasterManager
         }
 
         return match ($credentials->getSocialPlatform()) {
-            SocialPlatform::Twitter   => $this->publishToTwitter($content, $credentials),
-            SocialPlatform::LinkedIn  => $this->publishToLinkedIn($content, $credentials),
-            SocialPlatform::Facebook  => $this->publishToFacebook($content, $credentials),
+            SocialPlatform::Twitter => $this->publishToTwitter($content, $credentials),
+            SocialPlatform::LinkedIn => $this->publishToLinkedIn($content, $credentials),
+            SocialPlatform::Facebook => $this->publishToFacebook($content, $credentials),
             SocialPlatform::Instagram => $this->publishToInstagram($content, $credentials),
-            SocialPlatform::Threads   => $this->publishToThreads($content, $credentials),
-            SocialPlatform::TikTok    => $this->publishToTikTok($content, $credentials),
+            SocialPlatform::Threads => $this->publishToThreads($content, $credentials),
+            SocialPlatform::TikTok => $this->publishToTikTok($content, $credentials),
         };
     }
 
@@ -70,7 +70,7 @@ class SocialCasterManager
         $charLimit = Config::get("social-caster.char_limits.{$platform->value}", 3000);
 
         if (mb_strlen((string) $body) > (is_numeric($charLimit) ? (int) $charLimit : 3000)) {
-            $errors[] = "Post body exceeds {$platform->value} character limit (".(is_scalar($charLimit) ? (string) $charLimit : '3000').").";
+            $errors[] = "Post body exceeds {$platform->value} character limit (".(is_scalar($charLimit) ? (string) $charLimit : '3000').').';
         }
 
         if ($platform === SocialPlatform::Instagram && ($content->getPublishableImagePath() === null || $content->getPublishableImagePath() === '')) {
@@ -136,11 +136,11 @@ class SocialCasterManager
 
         $response = $connector->send(
             new CreateLinkedInPost([
-                'author'          => $authorUrn,
-                'lifecycleState'  => 'PUBLISHED',
+                'author' => $authorUrn,
+                'lifecycleState' => 'PUBLISHED',
                 'specificContent' => [
                     'com.linkedin.ugc.ShareContent' => [
-                        'shareCommentary'    => ['text' => (string) $content->getPublishableBody()],
+                        'shareCommentary' => ['text' => (string) $content->getPublishableBody()],
                         'shareMediaCategory' => 'NONE',
                     ],
                 ],
@@ -205,7 +205,7 @@ class SocialCasterManager
         $createResponse = $connector->send(
             new CreateInstagramMedia($instagramBusinessAccountId, [
                 'image_url' => $imageUrl,
-                'caption'   => (string) $content->getPublishableBody(),
+                'caption' => (string) $content->getPublishableBody(),
             ]),
         );
         $this->assertSuccessful($createResponse, 'Instagram');
@@ -229,7 +229,7 @@ class SocialCasterManager
             externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
             rawResponse: [
-                'create'  => $createData,
+                'create' => $createData,
                 'publish' => $publishData,
             ],
         );
@@ -294,7 +294,7 @@ class SocialCasterManager
             externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
             rawResponse: [
-                'init'    => $initData,
+                'init' => $initData,
                 'publish' => $publishData,
             ],
         );
