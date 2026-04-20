@@ -105,14 +105,17 @@ class SocialCasterManager
         $connector = new TwitterConnector($credentials);
 
         $response = $connector->send(
-            new CreateTweet($content->getPublishableBody()),
+            new CreateTweet((string) $content->getPublishableBody()),
         );
         $this->assertSuccessful($response, 'X/Twitter');
 
+        $data = $response->json();
+        $externalId = is_array($data) ? data_get($data, 'data.id') : null;
+
         return new PublishResult(
-            externalId: data_get($response->json(), 'data.id'),
+            externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
-            rawResponse: $response->json(),
+            rawResponse: $data,
         );
     }
 
@@ -128,7 +131,7 @@ class SocialCasterManager
                 'lifecycleState'  => 'PUBLISHED',
                 'specificContent' => [
                     'com.linkedin.ugc.ShareContent' => [
-                        'shareCommentary'    => ['text' => $content->getPublishableBody()],
+                        'shareCommentary'    => ['text' => (string) $content->getPublishableBody()],
                         'shareMediaCategory' => 'NONE',
                     ],
                 ],
@@ -139,10 +142,13 @@ class SocialCasterManager
         );
         $this->assertSuccessful($response, 'LinkedIn');
 
+        $data = $response->json();
+        $externalId = $response->header('x-restli-id') ?? (is_array($data) ? data_get($data, 'id') : null);
+
         return new PublishResult(
-            externalId: $response->header('x-restli-id') ?? data_get($response->json(), 'id'),
+            externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
-            rawResponse: $response->json(),
+            rawResponse: $data,
         );
     }
 
@@ -157,14 +163,17 @@ class SocialCasterManager
         $connector = new FacebookConnector($credentials);
 
         $response = $connector->send(
-            new CreateFacebookPost($pageId, ['message' => $content->getPublishableBody()]),
+            new CreateFacebookPost($pageId, ['message' => (string) $content->getPublishableBody()]),
         );
         $this->assertSuccessful($response, 'Facebook');
 
+        $data = $response->json();
+        $externalId = is_array($data) ? data_get($data, 'id') : null;
+
         return new PublishResult(
-            externalId: data_get($response->json(), 'id'),
+            externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
-            rawResponse: $response->json(),
+            rawResponse: $data,
         );
     }
 
@@ -187,12 +196,13 @@ class SocialCasterManager
         $createResponse = $connector->send(
             new CreateInstagramMedia($instagramBusinessAccountId, [
                 'image_url' => $imageUrl,
-                'caption'   => $content->getPublishableBody(),
+                'caption'   => (string) $content->getPublishableBody(),
             ]),
         );
         $this->assertSuccessful($createResponse, 'Instagram');
 
-        $creationId = data_get($createResponse->json(), 'id');
+        $createData = $createResponse->json();
+        $creationId = is_array($createData) ? data_get($createData, 'id') : null;
 
         if (! is_string($creationId) || $creationId === '') {
             throw new RuntimeException('Instagram media creation did not return a creation ID.');
@@ -203,12 +213,15 @@ class SocialCasterManager
         );
         $this->assertSuccessful($publishResponse, 'Instagram');
 
+        $publishData = $publishResponse->json();
+        $externalId = is_array($publishData) ? data_get($publishData, 'id') : null;
+
         return new PublishResult(
-            externalId: data_get($publishResponse->json(), 'id'),
+            externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
             rawResponse: [
-                'create'  => $createResponse->json(),
-                'publish' => $publishResponse->json(),
+                'create'  => $createData,
+                'publish' => $publishData,
             ],
         );
     }
@@ -224,14 +237,17 @@ class SocialCasterManager
         $connector = new ThreadsConnector($credentials);
 
         $response = $connector->send(
-            new CreateThreadsPost(trim($userId), $content->getPublishableBody()),
+            new CreateThreadsPost(trim($userId), (string) $content->getPublishableBody()),
         );
         $this->assertSuccessful($response, 'Threads');
 
+        $data = $response->json();
+        $externalId = is_array($data) ? data_get($data, 'id') : null;
+
         return new PublishResult(
-            externalId: data_get($response->json(), 'id'),
+            externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
-            rawResponse: $response->json(),
+            rawResponse: $data,
         );
     }
 
@@ -250,23 +266,27 @@ class SocialCasterManager
         );
         $this->assertSuccessful($initResponse, 'TikTok');
 
-        $publishId = data_get($initResponse->json(), 'data.publish_id');
+        $initData = $initResponse->json();
+        $publishId = is_array($initData) ? data_get($initData, 'data.publish_id') : null;
 
         if (! is_string($publishId) || $publishId === '') {
             throw new RuntimeException('TikTok upload initiation did not return publish_id.');
         }
 
         $publishResponse = $connector->send(
-            new PublishTikTokVideo($publishId, $content->getPublishableTitle() ?? $content->getPublishableBody()),
+            new PublishTikTokVideo($publishId, $content->getPublishableTitle() ?? (string) $content->getPublishableBody()),
         );
         $this->assertSuccessful($publishResponse, 'TikTok');
 
+        $publishData = $publishResponse->json();
+        $externalId = is_array($publishData) ? data_get($publishData, 'data.publish_id', $publishId) : $publishId;
+
         return new PublishResult(
-            externalId: data_get($publishResponse->json(), 'data.publish_id', $publishId),
+            externalId: is_string($externalId) ? $externalId : null,
             externalUrl: null,
             rawResponse: [
-                'init'    => $initResponse->json(),
-                'publish' => $publishResponse->json(),
+                'init'    => $initData,
+                'publish' => $publishData,
             ],
         );
     }

@@ -2,10 +2,22 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/illuma-law/laravel-social-caster.svg?style=flat-square)](https://packagist.org/packages/illuma-law/laravel-social-caster)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/illuma-law/laravel-social-caster/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/illuma-law/laravel-social-caster/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/illuma-law/laravel-social-caster/php-cs-fixer.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/illuma-law/laravel-social-caster/actions?query=workflow%3Aphp-cs-fixer+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/illuma-law/laravel-social-caster.svg?style=flat-square)](https://packagist.org/packages/illuma-law/laravel-social-caster)
 
 A standalone Laravel package for social media publishing. Supports Twitter, LinkedIn, Facebook, Instagram, Threads, and TikTok.
+
+## TL;DR
+
+```php
+use Illuma\SocialCaster\Facades\SocialCaster;
+
+// Publish content to social media
+$result = SocialCaster::publish($content, $credentials);
+
+if ($result->successful) {
+    echo "Published with ID: {$result->externalId}";
+}
+```
 
 ## Installation
 
@@ -156,13 +168,13 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 ## Security
 
-If you discover any security related issues, please email hello@illumalaw.com instead of using the issue tracker.
+If you discover any security related issues, please email support@illuma.law instead of using the issue tracker.
 
 ## Credits
 
-- [Illuma Law](https://github.com/illuma-law)
+- [illuma-law](https://github.com/illuma-law)
 - [All Contributors](../../contributors)
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). Please see [License File](LICENSE) for more information.

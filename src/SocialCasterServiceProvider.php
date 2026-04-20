@@ -18,8 +18,8 @@ class SocialCasterServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        $this->app->singleton('social-caster', function ($app) {
-            return new SocialCasterManager;
+        $this->app->singleton('social-caster', function (\Illuminate\Foundation\Application $app): SocialCasterManager {
+            return new SocialCasterManager();
         });
     }
 }
