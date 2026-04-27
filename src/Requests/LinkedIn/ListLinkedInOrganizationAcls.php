@@ -27,9 +27,9 @@ final class ListLinkedInOrganizationAcls extends Request
     protected function defaultQuery(): array
     {
         return [
-            'q'          => 'roleAssignee',
-            'state'      => 'APPROVED',
-            'count'      => 100,
+            'q' => 'roleAssignee',
+            'state' => 'APPROVED',
+            'count' => 100,
             'projection' => self::PROJECTION,
         ];
     }
