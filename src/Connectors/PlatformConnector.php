@@ -28,7 +28,7 @@ abstract class PlatformConnector extends Connector
     {
         return [
             'connect_timeout' => 10,
-            'timeout' => 30,
+            'timeout'         => 30,
         ];
     }
 }

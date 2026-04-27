@@ -169,7 +169,7 @@ test('it can publish to facebook', function () {
 
 test('it can publish to instagram', function () {
     Saloon::fake([
-        CreateInstagramMedia::class => MockResponse::make(['id' => 'creation-123'], 201),
+        CreateInstagramMedia::class  => MockResponse::make(['id' => 'creation-123'], 201),
         PublishInstagramMedia::class => MockResponse::make(['id' => 'instagram-123'], 201),
     ]);
 
@@ -204,7 +204,7 @@ test('it can publish to threads', function () {
 test('it can publish to tiktok', function () {
     Saloon::fake([
         InitiateTikTokUpload::class => MockResponse::make(['data' => ['publish_id' => 'tiktok-init-123']], 200),
-        PublishTikTokVideo::class => MockResponse::make(['data' => ['publish_id' => 'tiktok-123']], 200),
+        PublishTikTokVideo::class   => MockResponse::make(['data' => ['publish_id' => 'tiktok-123']], 200),
     ]);
 
     $content = createMockContent(SocialPlatform::TikTok, ['video_url' => 'https://example.com/video.mp4']);

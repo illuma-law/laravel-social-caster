@@ -31,7 +31,7 @@ class InitiateTikTokUpload extends Request implements HasBody
     {
         return [
             'source_info' => [
-                'source' => $this->videoUrl !== null ? 'PULL_FROM_URL' : 'FILE_UPLOAD',
+                'source'    => $this->videoUrl !== null ? 'PULL_FROM_URL' : 'FILE_UPLOAD',
                 'video_url' => $this->videoUrl,
             ],
         ];
